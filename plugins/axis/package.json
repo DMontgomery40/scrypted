@@ -1,9 +1,9 @@
 {
-    "name": "scrypted-tempest",
-    "version": "0.0.2",
-    "description": "Tempest Weather Station for Scrypted",
-    "author": "dmontgomery40",
-    "license": "Apache-2.0",
+    "name": "@scrypted/axis",
+    "version": "0.0.1",
+    "description": "Axis Camera Plugin for Scrypted",
+    "author": "Scrypted",
+    "license": "Apache",
     "scripts": {
       "scrypted-setup-project": "scrypted-setup-project",
       "prescrypted-setup-project": "scrypted-package-json",
@@ -20,27 +20,26 @@
     "keywords": [
       "scrypted",
       "plugin",
-      "tempest",
-      "weather"
+      "axis",
+      "camera"
     ],
     "scrypted": {
-      "name": "Tempest Weather Station",
+      "name": "Axis Camera Plugin",
       "type": "DeviceProvider",
       "interfaces": [
         "DeviceProvider",
-        "Settings",
-        "Thermometer",
-        "HumiditySensor",
-        "BinarySensor",
-        "Battery",
-        "Fan"
+        "DeviceCreator"
+      ],
+      "pluginDependencies": [
+        "@scrypted/rtsp",
+        "@scrypted/onvif"
       ]
     },
     "dependencies": {
-      "axios": "^0.21.1"
+      "@scrypted/common": "file:../../common",
+      "@scrypted/sdk": "file:../../sdk"
     },
     "devDependencies": {
-      "@scrypted/sdk": "^0.3.50",
       "@types/node": "^16.9.6"
     }
   }

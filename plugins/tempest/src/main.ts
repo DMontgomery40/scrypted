@@ -14,7 +14,7 @@ import sdk, {
 import axios from 'axios';
 
 const { deviceManager } = sdk;
-
+    
 class TempestWeatherStation extends ScryptedDeviceBase implements 
     DeviceProvider, 
     Settings, 
@@ -33,6 +33,8 @@ class TempestWeatherStation extends ScryptedDeviceBase implements
     solarRadiation: number;
     batteryLevel: number;
     temperatureUnit: TemperatureUnit;
+    windGust: number;
+    windLull: number;
 
     constructor(nativeId?: string) {
         super(nativeId);
@@ -47,7 +49,7 @@ class TempestWeatherStation extends ScryptedDeviceBase implements
         this.rainRate = 0;
         this.solarRadiation = 0;
         this.batteryLevel = 100;
-        this.temperatureUnit = TemperatureUnit.C; // Default to Celsius
+        this.temperatureUnit = TemperatureUnit.F; // Default to Celsius
 
         this.updateStatus();
         this.startPeriodicUpdates();
@@ -96,12 +98,14 @@ class TempestWeatherStation extends ScryptedDeviceBase implements
             this.uvIndex = data.uv;
             this.rainRate = data.precip;
             this.solarRadiation = data.solar_radiation;
-            this.batteryLevel = data.battery * 100; // Assuming battery is reported as a decimal
+            this.batteryLevel = data.battery; 
+            this.windGust = data.wind_gust;
+            this.windLull = data.wind_lull;
 
             // Update Scrypted device state
             this.temperature = this.temperature;
             this.humidity = this.humidity;
-            this.binaryState = this.windSpeed >= 10; // High wind alert
+            this.binaryState = this.windGust>= 6; // High wind alert
             this.batteryLevel = this.batteryLevel;
 
             // Emit events for each updated property
@@ -109,6 +113,8 @@ class TempestWeatherStation extends ScryptedDeviceBase implements
             this.onDeviceEvent(ScryptedInterface.HumiditySensor, this.humidity);
             this.onDeviceEvent(ScryptedInterface.BinarySensor, this.binaryState);
             this.onDeviceEvent(ScryptedInterface.Battery, this.batteryLevel);
+            this.onDeviceEvent(ScryptedInterface.Fan, this.windGust);
+        
 
             this.console.log('Weather data updated:', data);
         } catch (error) {
