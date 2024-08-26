@@ -32,10 +32,7 @@ import { PluginHost, UnsupportedRuntimeError } from './plugin/plugin-host';
 import { isConnectionUpgrade, PluginHttp } from './plugin/plugin-http';
 import { WebSocketConnection } from './plugin/plugin-remote-websocket';
 import { getPluginVolume } from './plugin/plugin-volume';
-import { CustomRuntimeWorker } from './plugin/runtime/custom-worker';
-import { NodeForkWorker } from './plugin/runtime/node-fork-worker';
-import { PythonRuntimeWorker } from './plugin/runtime/python-worker';
-import { RuntimeWorker, RuntimeWorkerOptions } from './plugin/runtime/runtime-worker';
+import { getBuiltinRuntimeHosts } from './plugin/runtime/runtime-host';
 import { getIpAddress, SCRYPTED_INSECURE_PORT, SCRYPTED_SECURE_PORT } from './server-settings';
 import { AddressSettings } from './services/addresses';
 import { Alerts } from './services/alerts';
@@ -46,7 +43,6 @@ import { getNpmPackageInfo, PluginComponent } from './services/plugin';
 import { ServiceControl } from './services/service-control';
 import { UsersService } from './services/users';
 import { getState, ScryptedStateManager, setState } from './state';
-import { DenoWorker } from './plugin/runtime/deno-worker';
 
 interface DeviceProxyPair {
     handler: PluginDeviceProxyHandler;
@@ -60,8 +56,6 @@ interface HttpPluginData {
     pluginHost: PluginHost;
     pluginDevice: PluginDevice
 }
-
-export type RuntimeHost = (mainFilename: string, pluginId: string, options: RuntimeWorkerOptions, runtime: ScryptedRuntime) => RuntimeWorker;
 
 export class ScryptedRuntime extends PluginHttp<HttpPluginData> {
     clusterId = crypto.randomBytes(3).toString('hex');
@@ -93,17 +87,12 @@ export class ScryptedRuntime extends PluginHttp<HttpPluginData> {
     usersService = new UsersService(this);
     info = new Info();
     backup = new Backup(this);
-    pluginHosts = new Map<string, RuntimeHost>();
+    pluginHosts = getBuiltinRuntimeHosts();
 
     constructor(public mainFilename: string, public datastore: Level, insecure: http.Server, secure: https.Server, app: express.Application) {
         super(app);
         // ensure that all the users are loaded from the db.
         this.usersService.getAllUsers();
-
-        this.pluginHosts.set('custom', (_, pluginId, options, runtime) => new CustomRuntimeWorker(pluginId, options, runtime));
-        this.pluginHosts.set('python', (_, pluginId, options) => new PythonRuntimeWorker(pluginId, options));
-        this.pluginHosts.set('node', (mainFilename, pluginId, options) => new NodeForkWorker(mainFilename, pluginId, options));
-        this.pluginHosts.set('deno', (mainFilename, pluginId, options) => new DenoWorker(mainFilename, pluginId, options));
 
         app.disable('x-powered-by');
 

@@ -116,21 +116,22 @@ else {
         if (out)
             rimraf.sync(out);
 
-        for (let entry of entries) {
-            await new Promise((resolve, reject) => {
-                let webpackConfig;
-                const customWebpackConfig = path.resolve(cwd, nodeWebpackConfig);
-                const defaultWebpackConfig = path.resolve(__dirname, '..', nodeWebpackConfig);
-                if (fs.existsSync(customWebpackConfig)) {
-                    webpackConfig = customWebpackConfig;
-                }
-                else {
-                    webpackConfig = defaultWebpackConfig;
-                }
+        await new Promise((resolve, reject) => {
+            let webpackConfig;
+            const customWebpackConfig = path.resolve(cwd, nodeWebpackConfig);
+            const defaultWebpackConfig = path.resolve(__dirname, '..', nodeWebpackConfig);
+            if (fs.existsSync(customWebpackConfig)) {
+                webpackConfig = customWebpackConfig;
+            }
+            else {
+                webpackConfig = defaultWebpackConfig;
+            }
 
-                process.env.SCRYPTED_DEFAULT_WEBPACK_CONFIG = defaultWebpackConfig;
+            process.env.SCRYPTED_DEFAULT_WEBPACK_CONFIG = defaultWebpackConfig;
 
-                const config = require(webpackConfig);
+            const webpackEntries = {};
+            const config = require(webpackConfig);
+            for (let entry of entries) {
                 entry ||= {
                     filename: config?.entry?.main,
                     output: defaultMainNodeJs,
@@ -139,57 +140,59 @@ else {
                 if (!entry?.filename) {
                     console.error("no main.ts or main.js was found, and webpack config does not supply an entry file.");
                     console.error(entry?.filename);
-                    return 1;
+                    throw new Error();
                 }
 
                 const main = path.resolve(cwd, entry.filename);
                 if (!fs.existsSync(main)) {
                     console.error("entry file specified in webpack config does not exist");
-                    return 1;
+                    throw new Error();
                 }
 
-                config.entry = {
-                    main,
-                };
-                config.output.path = out;
-                config.output.filename = entry?.output || defaultMainNodeJs;
 
-                for (const opt of optionalDependencies) {
-                    const t = tmp.tmpNameSync({
-                        postfix: '.js',
-                    });
-                    fs.writeFileSync(t, `
-                        const e = __non_webpack_require__('${opt}');
-                        module.exports = e;
-                    `);
-                    config.resolve.alias[opt] = t;
+                webpackEntries[entry?.output] = main;
+            }
+
+
+            config.entry = webpackEntries;
+            config.output.filename = '[name]';
+            config.output.path = out;
+            for (const opt of optionalDependencies) {
+                const t = tmp.tmpNameSync({
+                    postfix: '.js',
+                });
+                fs.writeFileSync(t, `
+                    const e = __non_webpack_require__('${opt}');
+                    module.exports = e;
+                `);
+                config.resolve.alias[opt] = t;
+            }
+
+            webpack(config, (err, stats) => {
+                if (err)
+                    return reject(err);
+
+                if (stats.hasErrors()) {
+                    console.error(stats.toJson().errors);
+                    return reject(new Error('webpack failed'));
                 }
 
-                webpack(config, (err, stats) => {
-                    if (err)
-                        return reject(err);
+                resolve();
+            })
+        });
 
-                    if (stats.hasErrors()) {
-                        console.error(stats.toJson().errors);
-                        return reject(new Error('webpack failed'));
-                    }
-
-                    // create a zip that has a main.js in the root, and an fs folder containing a read only virtual file system.
-                    // todo: read write file system? seems like a potential sandbox and backup nightmare to do a real fs. scripts should
-                    // use localStorage, etc?
-                    const jsFiles = fs.readdirSync(out, {
-                        withFileTypes: true
-                    }).filter(ft => ft.isFile() && ft.name.endsWith('.js')).map(ft => ft.name);
-                    for (const js of jsFiles) {
-                        zip.addLocalFile(path.join(out, js));
-                        const sourcemap = path.join(out, js + '.map');
-                        if (fs.existsSync(sourcemap))
-                            zip.addLocalFile(sourcemap);
-                        console.log(js);
-                    }
-                    resolve();
-                })
-            });
+        // create a zip that has a main.nodejs.js in the root, and an fs folder containing a read only virtual file system.
+        // todo: read write file system? seems like a potential sandbox and backup nightmare to do a real fs. scripts should
+        // use localStorage, etc?
+        const jsFiles = fs.readdirSync(out, {
+            withFileTypes: true
+        }).filter(ft => ft.isFile() && ft.name.endsWith('.js')).map(ft => ft.name);
+        for (const js of jsFiles) {
+            zip.addLocalFile(path.join(out, js));
+            const sourcemap = path.join(out, js + '.map');
+            if (fs.existsSync(sourcemap))
+                zip.addLocalFile(sourcemap);
+            console.log(js);
         }
 
         const zipfs = path.join(cwd, 'fs');
