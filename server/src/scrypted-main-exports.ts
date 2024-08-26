@@ -10,10 +10,8 @@ import { PluginError } from './plugin/plugin-error';
 import { getScryptedVolume } from './plugin/plugin-volume';
 import { RPCResultError, startPeriodicGarbageCollection } from './rpc';
 import type { Runtime } from './scrypted-server-main';
+import { isNodePluginWorkerProcess } from './plugin/runtime/node-fork-worker';
 
-export function isChildProcess() {
-    return process.argv[2] === 'child' || process.argv[2] === 'child-thread'
-}
 
 function start(mainFilename: string, options?: {
     onRuntimeCreated?: (runtime: Runtime) => Promise<void>,
@@ -42,7 +40,7 @@ function start(mainFilename: string, options?: {
 
     startPeriodicGarbageCollection();
 
-    if (process.argv[2] === 'child' || process.argv[2] === 'child-thread') {
+    if (isNodePluginWorkerProcess()) {
         // plugins should never crash. this handler will be removed, and then readded
         // after the plugin source map is retrieved.
         process.on('uncaughtException', e => {
