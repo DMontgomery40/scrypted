@@ -1,45 +1,46 @@
 {
-    "name": "@scrypted/axis",
-    "version": "0.0.1",
-    "description": "Axis Camera Plugin for Scrypted",
-    "author": "Scrypted",
-    "license": "Apache",
-    "scripts": {
+   "name": "@scrypted/axis",
+   "version": "0.0.1",
+   "description": "Axis Camera Plugin for Scrypted",
+   "author": "Scrypted",
+   "license": "Apache",
+   "scripts": {
       "scrypted-setup-project": "scrypted-setup-project",
       "prescrypted-setup-project": "scrypted-package-json",
       "build": "scrypted-webpack",
+      "preprepublishOnly": "scrypted-changelog",
       "prepublishOnly": "NODE_ENV=production scrypted-webpack",
       "prescrypted-vscode-launch": "scrypted-webpack",
       "scrypted-vscode-launch": "scrypted-deploy-debug",
       "scrypted-deploy-debug": "scrypted-deploy-debug",
       "scrypted-debug": "scrypted-debug",
       "scrypted-deploy": "scrypted-deploy",
-      "scrypted-readme": "scrypted-readme",
-      "scrypted-package-json": "scrypted-package-json"
-    },
-    "keywords": [
+      "scrypted-changelog": "scrypted-changelog",
+      "scrypted-package-json": "scrypted-package-json",
+      "scrypted-readme": "scrypted-readme"
+   },
+   "keywords": [
       "scrypted",
       "plugin",
       "axis",
       "camera"
-    ],
-    "scrypted": {
+   ],
+   "scrypted": {
       "name": "Axis Camera Plugin",
       "type": "DeviceProvider",
       "interfaces": [
-        "DeviceProvider",
-        "DeviceCreator"
+         "DeviceProvider",
+         "DeviceCreator"
       ],
       "pluginDependencies": [
-        "@scrypted/rtsp",
-        "@scrypted/onvif"
+         "@scrypted/rtsp"
       ]
-    },
-    "dependencies": {
+   },
+   "dependencies": {
       "@scrypted/common": "file:../../common",
       "@scrypted/sdk": "file:../../sdk"
-    },
-    "devDependencies": {
+   },
+   "devDependencies": {
       "@types/node": "^16.9.6"
-    }
-  }
+   }
+}

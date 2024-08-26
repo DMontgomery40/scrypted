@@ -1,7 +1,8 @@
 import { AxiosRequestConfig } from 'axios';
-import { AuthFetchCredentialState, authHttpFetch } from '@scrypted/common/src/http-auth-fetch';
+import { AuthFetchCredentialState, AuthFetchOptions, HttpFetchOptions, authHttpFetch } from '@scrypted/common/src/http-auth-fetch';
 import { EventEmitter } from 'events';
 import sdk, { MediaObject } from '@scrypted/sdk';
+import { Readable } from 'node:stream';
 
 const { mediaManager } = sdk;
 
@@ -20,7 +21,7 @@ export class AxisAPI {
             ...config,
             rejectUnauthorized: false,
             credential: this.credential,
-        });
+        } as HttpFetchOptions<Readable> & AuthFetchOptions); // add this cast
         return response;
     }
 
@@ -107,17 +108,5 @@ export class AxisAPI {
             responseType: 'arraybuffer',
         });
         return Buffer.from(response.body);
-    }
-
-    async startIntercom(media: MediaObject): Promise<void> {
-        // Implement VAPIX intercom start
-        // This is a placeholder and needs to be implemented based on VAPIX documentation
-        this.console.warn('VAPIX intercom start not implemented');
-    }
-
-    async stopIntercom(): Promise<void> {
-        // Implement VAPIX intercom stop
-        // This is a placeholder and needs to be implemented based on VAPIX documentation
-        this.console.warn('VAPIX intercom stop not implemented');
     }
 }

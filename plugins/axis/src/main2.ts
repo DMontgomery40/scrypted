@@ -1,27 +1,17 @@
-import sdk, { Camera, Device, DeviceCreator, DeviceCreatorSettings, DeviceProvider, MediaObject, PictureOptions, ScryptedDeviceType, ScryptedInterface, Setting } from "@scrypted/sdk";
-import { RtspProvider, RtspSmartCamera, UrlMediaStreamOptions } from "../../rtsp/src/rtsp";
+import sdk, { Camera, DeviceCreator, DeviceCreatorSettings, DeviceProvider, MediaObject, ScryptedDeviceType, ScryptedInterface, Setting } from "@scrypted/sdk";
+import { RtspProvider, RtspSmartCamera } from "../../rtsp/src/rtsp";
 import { AxisAPI } from "./axis-api";
 
 const { mediaManager } = sdk;
 
 class AxisCamera extends RtspSmartCamera implements Camera {
-    takeSmartCameraPicture(options?: PictureOptions | undefined): Promise<MediaObject> {
-        throw new Error("Method not implemented.");
-    }
-    getConstructedVideoStreamOptions(): Promise<UrlMediaStreamOptions[]> {
-        throw new Error("Method not implemented.");
-    }
     api: AxisAPI;
 
-    constructor(nativeId: string, provider: Device) {
+    constructor(nativeId: string, provider: AxisProvider) {
         super(nativeId, provider);
-        this.newMethod().api = new AxisAPI(this.getHttpAddress(), this.getUsername(), this.getPassword(), this.console);
+        this.api = new AxisAPI(this.getHttpAddress(), this.getUsername(), this.getPassword(), this.console);
         this.updateDevice();
         this.listenEvents();
-    }
-
-    private newMethod() {
-        return this;
     }
 
     getHttpAddress(): string {
@@ -87,9 +77,6 @@ class AxisCamera extends RtspSmartCamera implements Camera {
 }
 
 class AxisProvider extends RtspProvider implements DeviceProvider, DeviceCreator {
-    getScryptedDeviceCreator(): string {
-        throw new Error("Method not implemented.");
-    }
     getAdditionalInterfaces() {
         return [
             ScryptedInterface.VideoCamera,
