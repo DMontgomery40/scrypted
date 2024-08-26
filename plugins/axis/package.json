@@ -2,7 +2,7 @@
    "name": "@scrypted/axis",
    "version": "0.0.1",
    "description": "Axis Camera Plugin for Scrypted",
-   "author": "Scrypted",
+   "author": "DMontgomery40",
    "license": "Apache",
    "scripts": {
       "scrypted-setup-project": "scrypted-setup-project",

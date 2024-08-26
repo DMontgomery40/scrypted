@@ -46,13 +46,13 @@ class AxisCamera extends RtspSmartCamera implements Camera {
         this.provider.updateDevice(this.nativeId, this.name, interfaces, ScryptedDeviceType.Camera);
     }
 
-    async getVideoStreamOptions() {
+    async getVideoStreamOptions(): Promise<UrlMediaStreamOptions[]> {
         try {
             const streamOptions = await this.api.getVideoStreamOptions();
             return streamOptions.map(option => ({
                 ...option,
                 url: `rtsp://${this.getUsername()}:${this.getPassword()}@${this.getHttpAddress()}${option.path}`,
-                tool: 'ffmpeg',
+                tool: 'ffmpeg' as MediaStream['tool'],
             }));
         } catch (error) {
             this.console.error('Error getting video stream options:', error);
