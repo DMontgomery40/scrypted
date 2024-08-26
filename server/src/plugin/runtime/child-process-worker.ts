@@ -1,10 +1,14 @@
-import { EventEmitter } from "ws";
-import { RuntimeWorker, RuntimeWorkerOptions } from "./runtime-worker";
 import child_process from 'child_process';
+import { EventEmitter } from "ws";
 import { RpcMessage, RpcPeer } from "../../rpc";
+import { RuntimeWorker, RuntimeWorkerOptions } from "./runtime-worker";
 
 export abstract class ChildProcessWorker extends EventEmitter implements RuntimeWorker {
     protected worker: child_process.ChildProcess;
+
+    get childProcess() {
+        return this.worker;
+    }
 
     constructor(public pluginId: string, options: RuntimeWorkerOptions) {
         super();
@@ -33,9 +37,6 @@ export abstract class ChildProcessWorker extends EventEmitter implements Runtime
         if (!this.worker)
             return;
         this.worker.kill('SIGKILL');
-        this.worker.removeAllListeners();
-        this.worker.stdout.removeAllListeners();
-        this.worker.stderr.removeAllListeners();
         this.worker = undefined;
     }
 

@@ -5,11 +5,6 @@ import net, { Server } from 'net';
 import { PassThrough, Readable } from 'stream';
 import { listenZero } from '../listen-zero';
 
-// deno's createRequire or node console doesn't hook inspect...
-// so grab teh deno console from globalThis which was set earlier in deno-plugin-remote.ts
-if (process.versions.deno)
-    console = (globalThis as any).denoConsole || console;
-
 export interface ConsoleServer {
     pluginConsole: Console;
     readPort: number,
@@ -328,4 +323,13 @@ export async function createConsoleServer(remoteStdout: Readable, remoteStderr: 
         readPort,
         writePort,
     };
+}
+
+export function pipeWorkerConsole(nativeWorker: { stdout: Readable, stderr: Readable }, useConsole = console) {
+    nativeWorker.stdout.on('data', (data) => {
+        useConsole.log(data.toString());
+    });
+    nativeWorker.stderr.on('data', (data) => {
+        useConsole.error(data.toString());
+    });
 }
