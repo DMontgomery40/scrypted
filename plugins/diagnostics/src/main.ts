@@ -294,7 +294,9 @@ class DiagnosticsPlugin extends ScryptedDeviceBase implements Settings {
                     this.warnStep('Upgrading to the Scrypted Desktop application is recommened for Windows and macOS.');
                 return;
             }
-
+            if (e === undefined) {
+                throw new Error('SCRYPTED_INSTALL_ENVIRONMENT is not set. This installation is likely from tteck\'s proxmox-helper-script, which is known to break things. https://docs.scrypted.app/installation.html#proxmox-ve');
+            }
             if (e !== 'docker' && e !== 'lxc')
                 throw new Error('Unrecognized Linux installation. Installation via Docker image or the official Proxmox LXC script is recommended.');
         });
