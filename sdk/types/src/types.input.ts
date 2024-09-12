@@ -234,7 +234,7 @@ export interface NotifierOptions {
   tag?: string;
   timestamp?: number;
   vibrate?: VibratePattern;
-  recordedEvent?: RecordedEvent;
+  recordedEvent?: RecordedEvent & { id: string };
 
   // removed from typescript dom?
   actions?: NotificationAction[];
@@ -2197,9 +2197,13 @@ export interface Setting {
   deviceFilter?: string;
   multiple?: boolean;
   /**
-   * Flat that the UI should immediately apply this setting.
+   * Flag that the UI should immediately apply this setting.
    */
   immediate?: boolean;
+  /**
+   * Flag that hte UI should open the console.
+   */
+  console?: boolean;
   value?: SettingValue;
 }
 
@@ -2583,6 +2587,8 @@ export interface ForkOptions {
   name?: string;
   filename?: string;
   runtime?: string;
+  id?: string;
+  nativeId?: ScryptedNativeId;
 }
 
 export interface ScryptedStatic {

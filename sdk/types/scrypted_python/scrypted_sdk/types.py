@@ -648,7 +648,7 @@ class NotifierOptions(TypedDict):
     dir: NotificationDirection
     image: str
     lang: str
-    recordedEvent: RecordedEvent
+    recordedEvent: Union[RecordedEvent, Any]
     renotify: bool
     requireInteraction: bool
     silent: bool
@@ -852,10 +852,11 @@ class Setting(TypedDict):
 
     choices: list[str]
     combobox: bool
+    console: bool  # Flag that hte UI should open the console.
     description: str
     deviceFilter: str
     group: str
-    immediate: bool  # Flat that the UI should immediately apply this setting.
+    immediate: bool  # Flag that the UI should immediately apply this setting.
     key: str
     multiple: bool
     placeholder: str

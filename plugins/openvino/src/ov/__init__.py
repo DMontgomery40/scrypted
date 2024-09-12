@@ -101,6 +101,8 @@ class OpenVINOPlugin(
         nvidia = False
         iris_xe = False
         arc = False
+        npu = False
+        gpu = False
 
         dgpus = []
         # search for NVIDIA dGPU, as that is not preferred by AUTO for some reason?
@@ -116,15 +118,27 @@ class OpenVINOPlugin(
                 if "NVIDIA" in full_device_name and "dGPU" in full_device_name:
                     dgpus.append(device)
                     nvidia = True
+                if "NPU" in device:
+                    npu = True
+                if "GPU" in device:
+                    gpu = True
             except:
                 pass
 
-        mode = self.storage.getItem("mode")
+        mode = self.storage.getItem("mode") or "Default"
         if mode == "Default":
             mode = "AUTO"
 
-            if len(dgpus):
+            if npu:
+                if gpu:
+                    mode = f"AUTO:NPU,GPU,CPU"
+                else:
+                    mode = f"AUTO:NPU,CPU"
+            elif len(dgpus):
                 mode = f"AUTO:{','.join(dgpus)},CPU"
+            # forcing GPU can cause crashes on older GPU.
+            elif gpu:
+                mode = f"GPU"
 
         mode = mode or "AUTO"
         self.mode = mode
@@ -137,7 +151,7 @@ class OpenVINOPlugin(
         if model == "Default" or model not in availableModels:
             if model != "Default":
                 self.storage.setItem("model", "Default")
-            if arc or nvidia:
+            if arc or nvidia or npu:
                 model = "scrypted_yolov9c_320"
             elif iris_xe:
                 model = "scrypted_yolov9s_320"
@@ -150,8 +164,6 @@ class OpenVINOPlugin(
         self.scrypted_model = "scrypted" in model
         self.sigmoid = model == "yolo-v4-tiny-tf"
         self.modelName = model
-
-        print(f"model/mode/precision: {model}/{mode}/{precision}")
 
         ovmodel = "best" if self.scrypted_model else model
 
@@ -189,19 +201,28 @@ class OpenVINOPlugin(
 
         try:
             self.compiled_model = self.core.compile_model(xmlFile, mode)
-            print(
-                "EXECUTION_DEVICES",
-                self.compiled_model.get_property("EXECUTION_DEVICES"),
-            )
         except:
-            import traceback
+            if mode == "GPU":
+                try:
+                    print("GPU mode failed, reverting to AUTO.")
+                    mode = "AUTO"
+                    self.mode = mode
+                    self.compiled_model = self.core.compile_model(xmlFile, mode)
+                except:
+                    import traceback
 
-            traceback.print_exc()
-            print("Reverting all settings.")
-            self.storage.removeItem("mode")
-            self.storage.removeItem("model")
-            self.storage.removeItem("precision")
-            self.requestRestart()
+                    traceback.print_exc()
+                    print("Reverting all settings.")
+                    self.storage.removeItem("mode")
+                    self.storage.removeItem("model")
+                    self.storage.removeItem("precision")
+                    self.requestRestart()
+
+        print(
+            "EXECUTION_DEVICES",
+            self.compiled_model.get_property("EXECUTION_DEVICES"),
+        )
+        print(f"model/mode/precision: {model}/{mode}/{precision}")
 
         # mobilenet 1,300,300,3
         # yolov3/4 1,416,416,3

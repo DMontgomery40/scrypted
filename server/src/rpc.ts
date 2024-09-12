@@ -442,7 +442,7 @@ export class RpcPeer {
             result.reject(error);
         }
         for (const y of this.yieldedAsyncIterators) {
-            y.throw(error).catch(() => {});
+            y.throw(error).catch(() => { });
         }
         this.yieldedAsyncIterators.clear();
         this.pendingResults = Object.freeze({});
@@ -594,13 +594,25 @@ export class RpcPeer {
 
         let proxiedEntry = this.localProxied.get(value);
         if (proxiedEntry) {
+            const {
+                proxyId: __remote_proxy_id,
+                properties: __remote_proxy_props,
+            } = this.onProxySerialization?.(value)
+                || {
+                    proxyId: proxiedEntry.id,
+                    properties: RpcPeer.prepareProxyProperties(value),
+                };
+
+            if (__remote_proxy_id !== proxiedEntry.id)
+                throw new Error('onProxySerialization proxy id mismatch');
+
             const __remote_proxy_finalizer_id = RpcPeer.generateId();
             proxiedEntry.finalizerId = __remote_proxy_finalizer_id;
             const ret: RpcRemoteProxyValue = {
-                __remote_proxy_id: proxiedEntry.id,
+                __remote_proxy_id,
                 __remote_proxy_finalizer_id,
                 __remote_constructor_name,
-                __remote_proxy_props: RpcPeer.prepareProxyProperties(value),
+                __remote_proxy_props,
                 __remote_proxy_oneway_methods: value?.[RpcPeer.PROPERTY_PROXY_ONEWAY_METHODS],
             }
             return ret;
@@ -619,12 +631,11 @@ export class RpcPeer {
         const {
             proxyId: __remote_proxy_id,
             properties: __remote_proxy_props,
-        } = this.onProxySerialization
-                ? this.onProxySerialization(value)
-                : {
-                    proxyId: RpcPeer.generateId(),
-                    properties: RpcPeer.prepareProxyProperties(value),
-                };
+        } = this.onProxySerialization?.(value)
+            || {
+                proxyId: RpcPeer.generateId(),
+                properties: RpcPeer.prepareProxyProperties(value),
+            };
 
         proxiedEntry = {
             id: __remote_proxy_id,
@@ -742,7 +753,7 @@ export class RpcPeer {
                                 }
                                 else {
                                     if (Object.isFrozen(this.pendingResults)) {
-                                        (target as AsyncGenerator).throw(new RPCResultError(this, 'RpcPeer has been killed (yield)')).catch(() => {});
+                                        (target as AsyncGenerator).throw(new RPCResultError(this, 'RpcPeer has been killed (yield)')).catch(() => { });
                                     }
                                     else {
                                         this.yieldedAsyncIterators.add(target);
