@@ -10,7 +10,7 @@ function readyn() {
 }
 
 cd /tmp
-SCRYPTED_VERSION=v0.116.0
+SCRYPTED_VERSION=v0.118.0
 SCRYPTED_TAR_ZST=scrypted-$SCRYPTED_VERSION.tar.zst
 if [ -z "$VMID" ]
 then
@@ -31,38 +31,48 @@ then
     mv scrypted.tar.zst $SCRYPTED_TAR_ZST
 fi
 
+echo "Downloading scrypted container backup."
+if [ ! -f "$SCRYPTED_TAR_ZST" ]
+then
+    curl -O -L https://github.com/koush/scrypted/releases/download/$SCRYPTED_VERSION/scrypted.tar.zst
+    mv scrypted.tar.zst $SCRYPTED_TAR_ZST
+fi
+
 echo "Checking for existing container."
 pct config $VMID
 if [ "$?" == "0" ]
 then
-    echo ""
+    echo
     echo "Existing container $VMID found. Run this script with --force to overwrite the existing container."
     echo "This will wipe all existing data. Clone the existing container to retain the data, then reassign the owner of the scrypted volume after installation is complete."
-    echo ""
+    echo
     echo "bash $0 --force"
-    echo ""
+    echo
 fi
 
 pct restore $VMID $SCRYPTED_TAR_ZST $@
 
 if [ "$?" != "0" ]
 then
-    echo ""
-    echo "The Scrypted container installation failed (pct restore error)."
-    echo ""
-    echo "This may be because the server's 'local' storage device is not being a valid"
-    echo "location for containers."
-    echo "Try running this script again with a different storage device like"
-    echo "'local-lvm' or 'local-zfs'."
-    echo ""
-    echo "#############################################################################"
-    echo "Paste the following command into this shell to install to local-lvm instead:"
-    echo ""
-    echo "bash $0 --storage local-lvm"
-    echo "#############################################################################"
-    echo ""
-    echo ""
-    exit 1
+    echo
+    echo -e "\033[1;32m+---------------------------------------------------------------+\033[0m"
+    echo -e "\033[1;32m|                                                               |\033[0m"
+    echo -e "\033[1;32m|   Quick note about your installation!                         |\033[0m"
+    echo -e "\033[1;32m|                                                               |\033[0m"
+    echo -e "\033[1;32m|   We just need to make a small adjustment. Easy fix!          |\033[0m"
+    echo -e "\033[1;32m|                                                               |\033[0m"
+    echo -e "\033[1;32m|   Copy and paste the command below, then press Enter.         |\033[0m"
+    echo -e "\033[1;32m|                                                               |\033[0m"
+    echo -e "\033[1;32m+---------------------------------------------------------------+\033[0m"
+    echo
+    echo -e "\033[1;32m                  ↓↓↓ Copy this command ↓↓↓\033[0m"
+    echo
+    echo "bash install-scrypted-proxmox.sh --storage local-lvm"
+    echo
+    echo -e "\033[1;32m                  ↑↑↑ Copy this command ↑↑↑\033[0m"
+    echo
+    echo -e "\033[1;32mThat’s it! This will set the correct storage location.\033[0m"
+    echo "Once done, you're all set!"
 fi
 
 pct set $VMID -net0 name=eth0,bridge=vmbr0,ip=dhcp,ip6=auto
